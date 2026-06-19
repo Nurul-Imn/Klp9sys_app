@@ -8,7 +8,7 @@
 
 **Jumlah Anggota:** `3` orang
 
-**Repositori:** `https://github.com/230705160-cloud/managementsys_app/settings/access?guidance_task='
+**Repositori:** `https://github.com/Nurul-Imn/Klp9sys_app.git'
 
 ---
 
