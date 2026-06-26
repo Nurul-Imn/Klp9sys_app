@@ -14,6 +14,7 @@ class Payment extends Model
         'amount',
         'currency',
         'payment_method',
+        'status',
         'payment_status',
         'paid_at',
         'payload',
@@ -25,6 +26,7 @@ class Payment extends Model
             'amount' => 'integer',
             'paid_at' => 'datetime',
             'payload' => 'array',
+            'status' => 'string',
         ];
     }
 
