@@ -53,6 +53,13 @@
                Edit
 
             </a>
+            <form action="{{ route('pets.destroy',$pet->id) }}" method="POST" class="d-inline">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger btn-sm">
+                    Hapus
+                </button>
+            </form>
 
         </td>
 

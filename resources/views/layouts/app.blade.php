@@ -29,13 +29,13 @@
                 <ul class="nav flex-column">
 
                     <li class="nav-item">
-                        <a class="nav-link" href="/dashboard">
+                        <a class="nav-link" href="{{ route('dashboard') }}">
                             Dashboard
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="/pets">
+                        <a class="nav-link" href="{{ route('pets.index') }}">
                             Pets
                         </a>
                     </li>
@@ -47,20 +47,20 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="/bookings">
+                        <a class="nav-link" href="{{ route('bookings.index') }}">
                             Bookings
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="/products">
+                        <a class="nav-link" href="{{ route('products.index') }}">
                             Products
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link" href="/payments">
-                            Payments
+                            Payment
                         </a>
                     </li>
 
