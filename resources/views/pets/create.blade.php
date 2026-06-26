@@ -4,6 +4,16 @@
 
 <h2>Tambah Pet</h2>
 
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <form action="{{ route('pets.store') }}"
       method="POST">
 
@@ -15,7 +25,14 @@
 
 <input type="text"
        name="name"
-       class="form-control">
+       class="form-control"> @error('name') is-invalid @enderror"
+        value="{{ old('name') }}">
+
+    @error('name')
+        <div class="invalid-feedback">
+            {{ $message }}
+        </div>
+    @enderror
 
 </div>
 
