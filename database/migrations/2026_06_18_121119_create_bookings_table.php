@@ -13,31 +13,15 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('user_id')
-                ->constrained()
-                ->onDelete('cascade');
-
-            $table->foreignId('pet_id')
-                ->constrained()
-                ->onDelete('cascade');
-                
-            $table->foreignId('service_id')
-                ->constrained()
-                ->onDelete('cascade');
-
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('pet_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('service_id')->nullable()->constrained()->onDelete('cascade');
+            $table->string('booking_code')->unique();
             $table->date('booking_date');
-            $table->time('booking_time');
-            
-            $table->enum('status', [
-                'pending', 
-                'confirmed', 
-                'completed', 
-                'cancelled'
-            ])->default('pending');
-
+            $table->string('time_slot')->nullable();
+            $table->string('status')->default('pending');
+            $table->integer('total_price')->default(0);
             $table->text('notes')->nullable();
-            
             $table->timestamps();
         });
     }

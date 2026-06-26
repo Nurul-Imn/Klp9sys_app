@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pet;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class PetController extends Controller
@@ -10,19 +11,19 @@ class PetController extends Controller
     /**
      * Display a listing of the resource.
      */
-   public function index()
+    public function index()
     {
-    $pets = Pet::all();
-
-    return response()->json($pets);
+        $pets = Pet::with('user')->get();
+        return view('pets.index', compact('pets'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-   public function create()
+    public function create()
     {
-    return view('pets.create');
+        $users = User::all();
+        return view('pets.create', compact('users'));
     }
 
     /**
@@ -30,43 +31,29 @@ class PetController extends Controller
      */
     public function store(Request $request)
     {
-    $request->validate([
-        'name' => 'required|string|max:100',
-        'species' => 'required|string|max:50',
-        'breed' => 'required|string|max:50',
-        'age' => 'required|integer|min:0|max:50',
-        'weight' => 'required|numeric|min:0',
-    ], [
-        'name.required' => 'Nama hewan wajib diisi',
-        'species.required' => 'Jenis hewan wajib diisi',
-        'breed.required' => 'Ras hewan wajib diisi',
-        'age.required' => 'Umur wajib diisi',
-        'age.integer' => 'Umur harus berupa angka',
-        'weight.numeric' => 'Berat harus berupa angka',
-    ]);
+        $validated = $request->validate([
+            'user_id' => 'nullable|exists:users,id',
+            'name' => 'required|string|max:255',
+            'species' => 'required|string|max:255',
+            'breed' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'age' => 'nullable|integer|min:0',
+            'weight' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
 
-    Pet::create([
-        'user_id' => auth()->id(),
-        'name' => $request->name,
-        'species' => $request->species,
-        'breed' => $request->breed,
-        'age' => $request->age,
-        'weight' => $request->weight,
-    ]);
+        Pet::create($validated);
 
-    return redirect()
-            ->route('pets.index')
-            ->with('success', 'Data berhasil ditambahkan');
+        return redirect()->route('pets.index')->with('success', 'Pet berhasil ditambahkan!');
     }
 
     /**
      * Display the specified resource.
      */
-   public function show(string $id)
+    public function show(string $id)
     {
-    $pet = Pet::findOrFail($id);
-
-    return view('pets.show', compact('pet'));
+        $pet = Pet::with(['user', 'bookings.service'])->findOrFail($id);
+        return view('pets.show', compact('pet'));
     }
 
     /**
@@ -74,9 +61,9 @@ class PetController extends Controller
      */
     public function edit(string $id)
     {
-    $pet = Pet::findOrFail($id);
-
-    return view('pets.edit', compact('pet'));
+        $pet = Pet::findOrFail($id);
+        $users = User::all();
+        return view('pets.edit', compact('pet', 'users'));
     }
 
     /**
@@ -84,47 +71,32 @@ class PetController extends Controller
      */
     public function update(Request $request, string $id)
     {
-    $request->validate([
-        'name' => 'required|string|max:100',
-        'species' => 'required|string|max:50',
-        'breed' => 'required|string|max:50',
-        'age' => 'required|integer|min:0|max:50',
-        'weight' => 'required|numeric|min:0',
-    ], [
-        'name.required' => 'Nama hewan wajib diisi',
-        'species.required' => 'Jenis hewan wajib diisi',
-        'breed.required' => 'Ras hewan wajib diisi',
-        'age.required' => 'Umur wajib diisi',
-        'age.integer' => 'Umur harus berupa angka',
-        'weight.numeric' => 'Berat harus berupa angka',
-    ]);
+        $pet = Pet::findOrFail($id);
+        $validated = $request->validate([
+            'user_id' => 'nullable|exists:users,id',
+            'name' => 'required|string|max:255',
+            'species' => 'required|string|max:255',
+            'breed' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'age' => 'nullable|integer|min:0',
+            'weight' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
 
-    $pet = Pet::findOrFail($id);
+        $pet->update($validated);
 
-    $pet->update([
-        'name' => $request->name,
-        'species' => $request->species,
-        'breed' => $request->breed,
-        'age' => $request->age,
-        'weight' => $request->weight,
-    ]);
-
-    return redirect()
-            ->route('pets.index')
-            ->with('success', 'Data berhasil diupdate');
+        return redirect()->route('pets.index')->with('success', 'Pet berhasil diperbarui!');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-   public function destroy(string $id)
+    public function destroy(string $id)
     {
-    $pet = Pet::findOrFail($id);
+        $pet = Pet::findOrFail($id);
+        $pet->delete();
 
-    $pet->delete();
-
-    return redirect()
-            ->route('pets.index')
-            ->with('success', 'Data berhasil dihapus');
+        return redirect()->route('pets.index')
+                        ->with('success', 'Data berhasil dihapus');
     }
 }

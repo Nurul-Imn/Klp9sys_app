@@ -13,26 +13,16 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('booking_id')
-                  ->constrained()
-                  ->onDelete('cascade');
-
-            $table->decimal('amount', 10, 2);
-
-            $table->enum('payment_method', [
-                'cash',
-                'transfer',
-                'ewallet'
-            ]);
-
-            $table->enum('payment_status', [
-                'unpaid',
-                'paid',
-            ])->default('unpaid');
-
-            $table->date('payment_date')->nullable();
-
+            $table->foreignId('booking_id')->constrained()->onDelete('cascade');
+            $table->string('transaction_id')->nullable();
+            $table->string('gateway')->nullable();
+            $table->integer('amount');
+            $table->string('currency')->default('IDR');
+            $table->string('payment_method')->nullable();
+            $table->string('status')->default('pending');
+            $table->string('payment_status')->default('unpaid');
+            $table->timestamp('paid_at')->nullable();
+            $table->json('payload')->nullable();
             $table->timestamps();
         });
     }

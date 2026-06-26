@@ -12,9 +12,8 @@ class ServiceController extends Controller
      */
     public function index()
     {
-    $services = Service::all();
-
-    return response()->json($services);
+        $services = Service::all();
+        return view('services.index', compact('services'));
     }
 
     /**
@@ -22,7 +21,7 @@ class ServiceController extends Controller
      */
     public function create()
     {
-        //
+        return view('services.create');
     }
 
     /**
@@ -30,33 +29,30 @@ class ServiceController extends Controller
      */
     public function store(Request $request)
     {
-    $request->validate([
-        'service_name' => 'required',
-        'description' => 'required',
-        'price' => 'required|numeric',
-        'duration' => 'required|integer',
-    ]);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'price' => 'required|integer|min:0',
+            'duration_minutes' => 'required|integer|min:1',
+            'description' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
 
-    $service = Service::create([
-        'service_name' => $request->service_name,
-        'description' => $request->description,
-        'price' => $request->price,
-        'duration' => $request->duration,
-    ]);
+        // Default boolean checkbox handling
+        $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
 
-    return response()->json([
-        'message' => 'Service berhasil ditambahkan',
-        'data' => $service
-    ]);
+        Service::create($validated);
+
+        return redirect()->route('services.index')->with('success', 'Layanan berhasil ditambahkan!');
     }
+
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
-    $service = Service::findOrFail($id);
-
-    return response()->json($service);
+        $service = Service::findOrFail($id);
+        return view('services.show', compact('service'));
     }
 
     /**
@@ -64,26 +60,30 @@ class ServiceController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $service = Service::findOrFail($id);
+        return view('services.edit', compact('service'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-   public function update(Request $request, string $id)
+    public function update(Request $request, string $id)
     {
-    $service = Service::findOrFail($id);
+        $service = Service::findOrFail($id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'price' => 'required|integer|min:0',
+            'duration_minutes' => 'required|integer|min:1',
+            'description' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
 
-    $service->update([
-        'service_name' => $request->service_name,
-        'description' => $request->description,
-        'price' => $request->price,
-        'duration' => $request->duration,
-    ]);
+        $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : false;
 
-    return response()->json([
-        'message' => 'Service berhasil diupdate'
-    ]);
+        $service->update($validated);
+
+        return redirect()->route('services.index')->with('success', 'Layanan berhasil diperbarui!');
     }
 
     /**
@@ -91,12 +91,9 @@ class ServiceController extends Controller
      */
     public function destroy(string $id)
     {
-    $service = Service::findOrFail($id);
+        $service = Service::findOrFail($id);
+        $service->delete();
 
-    $service->delete();
-
-    return response()->json([
-        'message' => 'Service berhasil dihapus'
-    ]);
+        return redirect()->route('services.index')->with('success', 'Layanan berhasil dihapus!');
     }
 }

@@ -7,77 +7,62 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    
-    public function store(Request $request)
+    public function index()
     {
-       $request->validate([
-    'booking_id' => 'required|exists:bookings,id',
-    'transaction_id' => 'required|string|max:100',
-    'gateway' => 'required|string|max:50',
-    'amount' => 'required|integer|min:0',
-    'currency' => 'required|string|max:10',
-    'payment_method' => 'required|string|max:50',
-    'status' => 'required|in:pending,paid,failed',
+        $payments = Payment::with('booking.user')->latest()->get();
+        return view('payments.index', compact('payments'));
+    }
+
+    public function show($id)
+    {
+        $payment = Payment::with('booking.user')->findOrFail($id);
+        return view('payments.show', compact('payment'));
+    }
+
+    public function edit($id)
+    {
+        $payment = Payment::findOrFail($id);
+        return view('payments.edit', compact('payment'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $payment = Payment::findOrFail($id);
+        
+        $validated = $request->validate([
+            'payment_status' => 'required|in:paid,unpaid,refunded',
+            'payment_method' => 'nullable|string|max:255',
+            'transaction_id' => 'nullable|string|max:255',
+            'gateway' => 'nullable|string|max:255',
         ]);
 
-        Payment::create([
-    'booking_id' => $request->booking_id,
-    'transaction_id' => $request->transaction_id,
-    'gateway' => $request->gateway,
-    'amount' => $request->amount,
-    'currency' => $request->currency,
-    'payment_method' => $request->payment_method,
-    'status' => $request->status,
-        ]);
+        $payment->payment_status = $validated['payment_status'];
+        $payment->payment_method = $validated['payment_method'];
+        $payment->transaction_id = $validated['transaction_id'];
+        $payment->gateway = $validated['gateway'];
 
-        return redirect()->back()
-            ->with('success', 'Pembayaran berhasil ditambahkan');
-    }
-    
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+        if ($validated['payment_status'] === 'paid') {
+            $payment->status = 'success';
+            $payment->paid_at = now();
+            // Automatically confirm the booking if paid
+            if ($payment->booking) {
+                $payment->booking->status = 'confirmed';
+                $payment->booking->save();
+            }
+        } else {
+            $payment->status = 'pending';
+            $payment->paid_at = null;
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        $payment->save();
+
+        return redirect()->route('payments.index')->with('success', 'Status pembayaran berhasil diperbarui!');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Payment $payment)
+    public function destroy($id)
     {
-    $request->validate([
-        'booking_id' => 'required|exists:bookings,id',
-        'amount' => 'required|numeric|min:0',
-        'payment_method' => 'required|in:cash,transfer,ewallet',
-        'payment_status' => 'required|in:pending,paid',
-    ]);
-
-    $payment->update([
-        'booking_id' => $request->booking_id,
-        'amount' => $request->amount,
-        'payment_method' => $request->payment_method,
-        'status' => $request->status,
-    ]);
-
-    return redirect()->back()
-        ->with('success', 'Pembayaran berhasil diperbarui');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $payment = Payment::findOrFail($id);
+        $payment->delete();
+        return redirect()->route('payments.index')->with('success', 'Pembayaran berhasil dihapus!');
     }
 }
