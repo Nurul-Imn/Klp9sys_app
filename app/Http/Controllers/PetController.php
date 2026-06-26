@@ -20,41 +20,53 @@ class PetController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+   public function create()
     {
-        //
+    return view('pets.create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {   
+    {
     $request->validate([
-        'user_id' => 'required',
-        'name' => 'required',
-        'species' => 'required',
-        'breed' => 'required',
-        'age' => 'required',
-        'weight' => 'required'
+        'name' => 'required|string|max:100',
+        'species' => 'required|string|max:50',
+        'breed' => 'required|string|max:50',
+        'age' => 'required|integer|min:0|max:50',
+        'weight' => 'required|numeric|min:0',
+    ], [
+        'name.required' => 'Nama hewan wajib diisi',
+        'species.required' => 'Jenis hewan wajib diisi',
+        'breed.required' => 'Ras hewan wajib diisi',
+        'age.required' => 'Umur wajib diisi',
+        'age.integer' => 'Umur harus berupa angka',
+        'weight.numeric' => 'Berat harus berupa angka',
     ]);
 
-    $pet = Pet::create($request->all());
-
-    return response()->json([
-        'message' => 'Pet berhasil ditambahkan',
-        'data' => $pet
+    Pet::create([
+        'user_id' => auth()->id(),
+        'name' => $request->name,
+        'species' => $request->species,
+        'breed' => $request->breed,
+        'age' => $request->age,
+        'weight' => $request->weight,
     ]);
+
+    return redirect()
+            ->route('pets.index')
+            ->with('success', 'Data berhasil ditambahkan');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+   public function show(string $id)
     {
-        $pet = Pet::findOrFail($id);
+    $pet = Pet::findOrFail($id);
 
-        return response()->json($pet);
+    return view('pets.show', compact('pet'));
     }
 
     /**
@@ -62,7 +74,9 @@ class PetController extends Controller
      */
     public function edit(string $id)
     {
-        //
+    $pet = Pet::findOrFail($id);
+
+    return view('pets.edit', compact('pet'));
     }
 
     /**
@@ -70,27 +84,47 @@ class PetController extends Controller
      */
     public function update(Request $request, string $id)
     {
+    $request->validate([
+        'name' => 'required|string|max:100',
+        'species' => 'required|string|max:50',
+        'breed' => 'required|string|max:50',
+        'age' => 'required|integer|min:0|max:50',
+        'weight' => 'required|numeric|min:0',
+    ], [
+        'name.required' => 'Nama hewan wajib diisi',
+        'species.required' => 'Jenis hewan wajib diisi',
+        'breed.required' => 'Ras hewan wajib diisi',
+        'age.required' => 'Umur wajib diisi',
+        'age.integer' => 'Umur harus berupa angka',
+        'weight.numeric' => 'Berat harus berupa angka',
+    ]);
+
     $pet = Pet::findOrFail($id);
 
-    $pet->update($request->all());
-
-    return response()->json([
-        'message' => 'Data berhasil diupdate',
-        'data' => $pet
+    $pet->update([
+        'name' => $request->name,
+        'species' => $request->species,
+        'breed' => $request->breed,
+        'age' => $request->age,
+        'weight' => $request->weight,
     ]);
+
+    return redirect()
+            ->route('pets.index')
+            ->with('success', 'Data berhasil diupdate');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+   public function destroy(string $id)
     {
     $pet = Pet::findOrFail($id);
 
     $pet->delete();
 
-    return response()->json([
-        'message' => 'Data berhasil dihapus'
-    ]);
+    return redirect()
+            ->route('pets.index')
+            ->with('success', 'Data berhasil dihapus');
     }
 }

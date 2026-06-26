@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Service;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -11,7 +12,9 @@ class ServiceController extends Controller
      */
     public function index()
     {
-        //
+    $services = Service::all();
+
+    return response()->json($services);
     }
 
     /**
@@ -27,15 +30,33 @@ class ServiceController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+    $request->validate([
+        'service_name' => 'required',
+        'description' => 'required',
+        'price' => 'required|numeric',
+        'duration' => 'required|integer',
+    ]);
 
+    $service = Service::create([
+        'service_name' => $request->service_name,
+        'description' => $request->description,
+        'price' => $request->price,
+        'duration' => $request->duration,
+    ]);
+
+    return response()->json([
+        'message' => 'Service berhasil ditambahkan',
+        'data' => $service
+    ]);
+    }
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
-        //
+    $service = Service::findOrFail($id);
+
+    return response()->json($service);
     }
 
     /**
@@ -49,9 +70,20 @@ class ServiceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+   public function update(Request $request, string $id)
     {
-        //
+    $service = Service::findOrFail($id);
+
+    $service->update([
+        'service_name' => $request->service_name,
+        'description' => $request->description,
+        'price' => $request->price,
+        'duration' => $request->duration,
+    ]);
+
+    return response()->json([
+        'message' => 'Service berhasil diupdate'
+    ]);
     }
 
     /**
@@ -59,6 +91,12 @@ class ServiceController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+    $service = Service::findOrFail($id);
+
+    $service->delete();
+
+    return response()->json([
+        'message' => 'Service berhasil dihapus'
+    ]);
     }
 }
