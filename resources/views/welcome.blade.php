@@ -31,9 +31,12 @@
                 </div>
                 <h1 class="font-extrabold text-lg text-slate-900 tracking-wide">PetCare</h1>
             </div>
-            <div class="flex items-center space-x-4">
-                <a href="{{ route('dashboard') }}" class="inline-flex items-center px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold shadow-md transition duration-150">
-                    Buka Dashboard
+            <div class="flex items-center space-x-3">
+                <a href="{{ route('login') }}" class="inline-flex items-center px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-sm font-semibold shadow-sm transition duration-150">
+                    Masuk
+                </a>
+                <a href="{{ route('dashboard') }}" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md transition duration-150">
+                    Dashboard
                 </a>
             </div>
         </div>
@@ -59,8 +62,8 @@
                         Kelola data pasien peliharaan, jadwalkan booking grooming atau pemeriksaan medis secara efisien, serta catat transaksi tagihan pembayaran Anda dalam satu aplikasi terintegrasi.
                     </p>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
-                        <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-7 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-base font-bold shadow-lg shadow-indigo-600/20 hover:shadow-xl transition-all duration-200">
-                            Masuk Ke Dashboard
+                        <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-7 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-base font-bold shadow-lg shadow-indigo-600/20 hover:shadow-xl transition-all duration-200">
+                            Masuk Ke Aplikasi
                             <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                             </svg>

@@ -12,6 +12,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
+
 Route::resource('pets', PetController::class);
 Route::resource('bookings', BookingController::class);
 Route::resource('services', ServiceController::class);

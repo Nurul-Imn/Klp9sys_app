@@ -91,14 +91,30 @@
         </nav>
 
         <!-- User Profile (Bottom) -->
-        <div class="p-4 border-t border-slate-800 bg-slate-950 flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md">
-                A
+        <div id="user-profile" class="p-4 border-t border-slate-800 bg-slate-950">
+            <div id="user-authenticated" class="hidden flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md shrink-0" id="user-avatar">A</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-white truncate" id="user-name">User</p>
+                    <span class="text-[11px] text-slate-500 font-medium capitalize" id="user-role">Administrator</span>
+                </div>
+                <button id="logout-btn" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition" title="Keluar">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
             </div>
-            <div>
-                <p class="text-sm font-bold text-white">Admin Pet Care</p>
-                <span class="text-[11px] text-slate-500 font-medium">Administrator</span>
-            </div>
+            <a id="user-guest" href="{{ route('login') }}" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-slate-200 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-400 group-hover:text-white transition">Masuk</p>
+                    <span class="text-[11px] text-slate-600 font-medium">Belum login</span>
+                </div>
+            </a>
         </div>
     </aside>
 
@@ -150,5 +166,46 @@
         </div>
     </main>
 
+    <script>
+        (function() {
+            var token = localStorage.getItem('auth_token');
+            var userEl = document.getElementById('user-authenticated');
+            var guestEl = document.getElementById('user-guest');
+            var nameEl = document.getElementById('user-name');
+            var roleEl = document.getElementById('user-role');
+            var avatarEl = document.getElementById('user-avatar');
+            var logoutBtn = document.getElementById('logout-btn');
+
+            function updateUI() {
+                if (token) {
+                    userEl.classList.remove('hidden');
+                    guestEl.classList.add('hidden');
+                    try {
+                        var user = JSON.parse(localStorage.getItem('user') || '{}');
+                        nameEl.textContent = user.name || 'User';
+                        roleEl.textContent = user.role || 'customer';
+                        avatarEl.textContent = (user.name || 'A').charAt(0).toUpperCase();
+                    } catch (e) {
+                        nameEl.textContent = 'User';
+                        roleEl.textContent = 'customer';
+                    }
+                } else {
+                    userEl.classList.add('hidden');
+                    guestEl.classList.remove('hidden');
+                }
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                });
+            }
+
+            updateUI();
+        })();
+    </script>
 </body>
 </html>
