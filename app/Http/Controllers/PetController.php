@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pet;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class PetController extends Controller
@@ -11,7 +13,8 @@ class PetController extends Controller
      */
     public function index()
     {
-        return view('pets.index');
+        $pets = Pet::with('user')->get();
+        return view('pets.index', compact('pets'));
     }
 
     /**
@@ -19,7 +22,8 @@ class PetController extends Controller
      */
     public function create()
     {
-        return view('pets.create');
+        $users = User::all();
+        return view('pets.create', compact('users'));
     }
 
     /**
@@ -27,7 +31,20 @@ class PetController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'user_id' => 'nullable|exists:users,id',
+            'name' => 'required|string|max:255',
+            'species' => 'required|string|max:255',
+            'breed' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'age' => 'nullable|integer|min:0',
+            'weight' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
+
+        Pet::create($validated);
+
+        return redirect()->route('pets.index')->with('success', 'Pet berhasil ditambahkan!');
     }
 
     /**
@@ -35,7 +52,8 @@ class PetController extends Controller
      */
     public function show(string $id)
     {
-        return view('pets.show');
+        $pet = Pet::with(['user', 'bookings.service'])->findOrFail($id);
+        return view('pets.show', compact('pet'));
     }
 
     /**
@@ -43,7 +61,9 @@ class PetController extends Controller
      */
     public function edit(string $id)
     {
-        return view('pets.edit');
+        $pet = Pet::findOrFail($id);
+        $users = User::all();
+        return view('pets.edit', compact('pet', 'users'));
     }
 
     /**
@@ -51,7 +71,21 @@ class PetController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        
+        $pet = Pet::findOrFail($id);
+        $validated = $request->validate([
+            'user_id' => 'nullable|exists:users,id',
+            'name' => 'required|string|max:255',
+            'species' => 'required|string|max:255',
+            'breed' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'age' => 'nullable|integer|min:0',
+            'weight' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
+
+        $pet->update($validated);
+
+        return redirect()->route('pets.index')->with('success', 'Pet berhasil diperbarui!');
     }
 
     /**
@@ -60,7 +94,6 @@ class PetController extends Controller
     public function destroy(string $id)
     {
         $pet = Pet::findOrFail($id);
-
         $pet->delete();
 
         return redirect()->route('pets.index')
