@@ -1,19 +1,22 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\V1\BookingController as ApiBookingController;
+use App\Http\Controllers\Api\V1\PaymentController as ApiPaymentController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\PetController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ServiceController;
 
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok']);
+Route::prefix('v1')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/reservations', [ApiBookingController::class, 'index']);
+        Route::post('/reservations', [ApiBookingController::class, 'store']);
+        Route::get('/reservations/{booking}', [ApiBookingController::class, 'show']);
+        Route::patch('/reservations/{booking}/status', [ApiBookingController::class, 'updateStatus']);
+        Route::delete('/reservations/{booking}', [ApiBookingController::class, 'cancel']);
+    });
+
+    Route::post('/payments/webhook', [ApiPaymentController::class, 'webhook'])
+        ->name('api.payments.webhook');
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/payments/charge', [ApiPaymentController::class, 'charge']);
+    });
 });
-
-Route::apiResource('pets', PetController::class);
-Route::apiResource('bookings', BookingController::class);
-Route::apiResource('services', ServiceController::class);
-Route::apiResource('products', ProductController::class);
-Route::apiResource('payments', PaymentController::class);
