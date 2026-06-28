@@ -2,67 +2,197 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Payment;
+use App\Contract\PaymentGatewayContract;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
-class PaymentController extends Controller
+class PaymentGatewayController extends Controller
 {
-    public function index()
-    {
-        $payments = Payment::with('booking.user')->latest()->get();
-        return view('payments.index', compact('payments'));
+    public function __construct(
+        protected PaymentGatewayContract $paymentGateway
+    ) {
     }
 
-    public function show($id)
+    /**
+     * POST /payments
+     * Membuat payment baru dari data checkout.
+     */
+    public function createPayment(Request $request): JsonResponse
     {
-        $payment = Payment::with('booking.user')->findOrFail($id);
-        return view('payments.show', compact('payment'));
-    }
-
-    public function edit($id)
-    {
-        $payment = Payment::findOrFail($id);
-        return view('payments.edit', compact('payment'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $payment = Payment::findOrFail($id);
-        
-        $validated = $request->validate([
-            'payment_status' => 'required|in:paid,unpaid,refunded',
-            'payment_method' => 'nullable|string|max:255',
-            'transaction_id' => 'nullable|string|max:255',
-            'gateway' => 'nullable|string|max:255',
+        $validator = Validator::make($request->all(), [
+            'order_id' => ['required', 'string'],
+            'amount'   => ['required', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'size:3'],
+            'customer' => ['required', 'array'],
+            'items'    => ['nullable', 'array'],
         ]);
 
-        $payment->payment_status = $validated['payment_status'];
-        $payment->payment_method = $validated['payment_method'];
-        $payment->transaction_id = $validated['transaction_id'];
-        $payment->gateway = $validated['gateway'];
-
-        if ($validated['payment_status'] === 'paid') {
-            $payment->status = 'success';
-            $payment->paid_at = now();
-            // Automatically confirm the booking if paid
-            if ($payment->booking) {
-                $payment->booking->status = 'confirmed';
-                $payment->booking->save();
-            }
-        } else {
-            $payment->status = 'pending';
-            $payment->paid_at = null;
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data checkout tidak valid.',
+                'errors'  => $validator->errors(),
+            ], 422);
         }
 
-        $payment->save();
+        try {
+            $result = $this->paymentGateway->createPayment($validator->validated());
 
-        return redirect()->route('payments.index')->with('success', 'Status pembayaran berhasil diperbarui!');
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment berhasil dibuat.',
+                'data'    => $result,
+            ], 201);
+        } catch (Exception $e) {
+            Log::error('Gagal membuat payment.', [
+                'error' => $e->getMessage(),
+                'data'  => $request->all(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat payment.',
+            ], 500);
+        }
     }
 
-    public function destroy($id)
+    /**
+     * POST /payments/link
+     * Generate payment link/redirect URL untuk checkout.
+     */
+    public function generatePaymentLink(Request $request): JsonResponse
     {
-        $payment = Payment::findOrFail($id);
-        $payment->delete();
-        return redirect()->route('payments.index')->with('success', 'Pembayaran berhasil dihapus!');
+        $validator = Validator::make($request->all(), [
+            'order_id' => ['required', 'string'],
+            'amount'   => ['required', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'size:3'],
+            'customer' => ['required', 'array'],
+            'items'    => ['nullable', 'array'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data checkout tidak valid.',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $paymentLink = $this->paymentGateway->generatePaymentLink($validator->validated());
+
+            return response()->json([
+                'success'     => true,
+                'payment_url' => $paymentLink,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Gagal membuat payment link.', [
+                'error' => $e->getMessage(),
+                'data'  => $request->all(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat payment link.',
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /payments/{transactionId}/verify
+     * Verifikasi apakah transaksi berhasil dibayar.
+     */
+    public function verifyPayment(string $transactionId): JsonResponse
+    {
+        try {
+            $isVerified = $this->paymentGateway->verifyPayment($transactionId);
+
+            return response()->json([
+                'success'        => true,
+                'transaction_id' => $transactionId,
+                'verified'       => $isVerified,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Gagal verifikasi payment.', [
+                'transaction_id' => $transactionId,
+                'error'          => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melakukan verifikasi payment.',
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /payments/{transactionId}/status
+     * Mengambil status terkini dari sebuah transaksi.
+     */
+    public function getPaymentStatus(string $transactionId): JsonResponse
+    {
+        try {
+            $status = $this->paymentGateway->getPaymentStatus($transactionId);
+
+            return response()->json([
+                'success'        => true,
+                'transaction_id' => $transactionId,
+                'status'         => $status,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Gagal mengambil status payment.', [
+                'transaction_id' => $transactionId,
+                'error'          => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil status payment.',
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /payments/webhook
+     * Menerima dan memproses notifikasi webhook dari payment gateway.
+     * Catatan: route ini biasanya perlu di-exclude dari CSRF middleware
+     * dan diverifikasi signature/secret-nya sesuai provider yang dipakai.
+     */
+    public function handleWebhook(Request $request): JsonResponse
+    {
+        $payload = $request->all();
+
+        Log::info('Webhook diterima dari payment gateway.', $payload);
+
+        try {
+            $handled = $this->paymentGateway->handleWebhook($payload);
+
+            if (! $handled) {
+                Log::warning('Webhook tidak berhasil diproses.', $payload);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Webhook tidak dapat diproses.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook berhasil diproses.',
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error saat memproses webhook.', [
+                'error'   => $e->getMessage(),
+                'payload' => $payload,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses webhook.',
+            ], 500);
+        }
     }
 }
