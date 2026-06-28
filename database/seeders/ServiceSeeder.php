@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Service;
+use Illuminate\Database\Seeder;
 
 class ServiceSeeder extends Seeder
 {
@@ -12,32 +12,43 @@ class ServiceSeeder extends Seeder
      */
     public function run(): void
     {
-       Service::create([
-        'service_name' => 'Grooming',
-        'description' => 'Layanan mandi dan perawatan bulu',
-        'price' => 50000,
-        'duration' => 60,
-        ]);
-       
-        Service::create([
-        'service_name' => 'Vaksin',
-        'description' => 'Layanan vaksinasi hewan',
-        'price' => 100000,
-        'duration' => 30,
-        ]);
+        $services = [
+            [
+                'name'             => 'Grooming Basic',
+                'category'         => 'Grooming',
+                'description'      => 'Layanan mandi dan perawatan bulu dasar',
+                'price'            => 50000,
+                'duration_minutes' => 60,
+                'is_active'        => true,
+            ],
+            [
+                'name'             => 'Vaksinasi',
+                'category'         => 'Medical',
+                'description'      => 'Layanan vaksinasi hewan peliharaan',
+                'price'            => 100000,
+                'duration_minutes' => 30,
+                'is_active'        => true,
+            ],
+            [
+                'name'             => 'Pemeriksaan Kesehatan',
+                'category'         => 'Medical',
+                'description'      => 'Pemeriksaan kesehatan umum oleh dokter hewan',
+                'price'            => 75000,
+                'duration_minutes' => 45,
+                'is_active'        => true,
+            ],
+            [
+                'name'             => 'Pet Hotel',
+                'category'         => 'Boarding',
+                'description'      => 'Penitipan hewan peliharaan per malam',
+                'price'            => 150000,
+                'duration_minutes' => 1440,
+                'is_active'        => true,
+            ],
+        ];
 
-        Service::create([
-        'service_name' => 'Pemeriksaan',
-        'description' => 'Pemeriksaan kesehatan hewan',
-        'price' => 75000,
-        'duration' => 45,
-        ]);
-        
-    Service::create([
-        'service_name' => 'Pet Hotel',
-        'description' => 'Penitipan hewan peliharaan',
-        'price' => 150000,
-        'duration' => 1440,
-        ]);
+        foreach ($services as $service) {
+            Service::firstOrCreate(['name' => $service['name']], $service);
+        }
     }
 }

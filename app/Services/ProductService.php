@@ -8,63 +8,50 @@ use App\Models\Product;
 class ProductService implements ProductServiceContract
 {
     /**
-     * Menampilkan semua produk
+     * List products with optional filters.
      */
     public function listProducts(array $filters = []): array
     {
         $query = Product::query();
 
-        if (isset($filters['category'])) {
-            $query->where('category', $filters['category']);
-        }
-
         if (isset($filters['is_active'])) {
             $query->where('is_active', $filters['is_active']);
         }
 
-        if (isset($filters['min_price'])) {
+        if (!empty($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['min_price'])) {
             $query->where('price', '>=', $filters['min_price']);
         }
 
-        if (isset($filters['max_price'])) {
+        if (!empty($filters['max_price'])) {
             $query->where('price', '<=', $filters['max_price']);
         }
 
-        return $query
-            ->orderBy('name')
-            ->get()
-            ->toArray();
+        return $query->latest()->get()->toArray();
     }
 
     /**
-     * Menampilkan detail produk
+     * Get a single product by ID.
      */
     public function getProduct(int $id): array
     {
-        $product = Product::find($id);
-
-        return $product ? $product->toArray() : [];
+        return Product::findOrFail($id)->toArray();
     }
 
     /**
-     * Menambah produk baru
+     * Create a new product.
      */
     public function createProduct(array $data): array
     {
-        $product = Product::create([
-            'name'        => $data['name'],
-            'category'    => $data['category'],
-            'price'       => $data['price'],
-            'stock'       => $data['stock'],
-            'description' => $data['description'] ?? null,
-            'is_active'   => $data['is_active'] ?? true,
-        ]);
-
+        $product = Product::create($data);
         return $product->toArray();
     }
 
     /**
-     * Mengubah data produk
+     * Update an existing product.
      */
     public function updateProduct(int $id, array $data): bool
     {
@@ -78,7 +65,7 @@ class ProductService implements ProductServiceContract
     }
 
     /**
-     * Menghapus produk
+     * Delete a product.
      */
     public function deleteProduct(int $id): bool
     {
@@ -88,28 +75,36 @@ class ProductService implements ProductServiceContract
             return false;
         }
 
-        return (bool) $product->delete();
+        return $product->delete();
     }
 
     /**
-     * Mencari produk
+     * Search products by keyword with optional filters.
      */
     public function searchProducts(string $query, array $filters = []): array
     {
-        $products = Product::where('name', 'like', "%{$query}%")
-            ->orWhere('description', 'like', "%{$query}%");
-
-        if (isset($filters['category'])) {
-            $products->where('category', $filters['category']);
-        }
+        $q = Product::where(function ($builder) use ($query) {
+            $builder->where('name', 'like', "%{$query}%")
+                    ->orWhere('description', 'like', "%{$query}%")
+                    ->orWhere('category', 'like', "%{$query}%");
+        });
 
         if (isset($filters['is_active'])) {
-            $products->where('is_active', $filters['is_active']);
+            $q->where('is_active', $filters['is_active']);
         }
 
-        return $products
-            ->orderBy('name')
-            ->get()
-            ->toArray();
+        if (!empty($filters['category'])) {
+            $q->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['min_price'])) {
+            $q->where('price', '>=', $filters['min_price']);
+        }
+
+        if (!empty($filters['max_price'])) {
+            $q->where('price', '<=', $filters['max_price']);
+        }
+
+        return $q->latest()->get()->toArray();
     }
 }

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 class AuthService implements AuthServiceContract
 {
     /**
-     * Register user baru
+     * Register a new user.
      */
     public function register(array $data): array
     {
@@ -19,59 +19,47 @@ class AuthService implements AuthServiceContract
             'name'     => $data['name'],
             'email'    => $data['email'],
             'password' => Hash::make($data['password']),
-            'role'     => $data['role'] ?? 'customer',
             'phone'    => $data['phone'] ?? null,
+            'role'     => 'customer',
         ]);
 
         return $user->toArray();
     }
 
     /**
-     * Login user
+     * Attempt to log the user in. Returns the user's name on success, null on failure.
      */
     public function login(string $email, string $password): ?string
     {
-        if (Auth::attempt([
-            'email' => $email,
-            'password' => $password,
-        ])) {
-            session()->regenerate();
+        $credentials = ['email' => $email, 'password' => $password];
 
-            return session()->getId();
+        if (!Auth::attempt($credentials)) {
+            return null;
         }
 
-        return null;
+        return Auth::user()->name;
     }
 
     /**
-     * Logout user
+     * Log the user out (session-based — nothing extra needed beyond the controller).
      */
     public function logout(int $userId): bool
     {
-        if (!Auth::check()) {
-            return false;
-        }
-
         Auth::logout();
-
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-
         return true;
     }
 
     /**
-     * Ambil profil user
+     * Return user profile data as an array.
      */
     public function getUserProfile(int $userId): array
     {
-        $user = User::find($userId);
-
-        return $user ? $user->toArray() : [];
+        $user = User::findOrFail($userId);
+        return $user->toArray();
     }
 
     /**
-     * Update profil user
+     * Update user profile fields.
      */
     public function updateUserProfile(int $userId, array $profileData): bool
     {
@@ -85,38 +73,33 @@ class AuthService implements AuthServiceContract
             $profileData['password'] = Hash::make($profileData['password']);
         }
 
-        $user->update($profileData);
-
-        return true;
+        return $user->update($profileData);
     }
 
     /**
-     * Ambil semua hewan milik user
+     * Return all pets belonging to a user.
      */
     public function getUserPets(int $userId): array
     {
-        $user = User::find($userId);
-
-        if (!$user) {
-            return [];
-        }
-
-        return $user->pets()->get()->toArray();
+        return Pet::where('user_id', $userId)->get()->toArray();
     }
 
     /**
-     * Simpan data hewan milik user
+     * Create or update a pet for the given user.
      */
     public function saveUserPet(int $userId, array $petData): bool
     {
-        $user = User::find($userId);
+        $petData['user_id'] = $userId;
 
-        if (!$user) {
-            return false;
+        if (!empty($petData['id'])) {
+            $pet = Pet::where('id', $petData['id'])->where('user_id', $userId)->first();
+            if (!$pet) {
+                return false;
+            }
+            return (bool) $pet->update($petData);
         }
 
-        $user->pets()->create($petData);
-
+        Pet::create($petData);
         return true;
     }
 }
