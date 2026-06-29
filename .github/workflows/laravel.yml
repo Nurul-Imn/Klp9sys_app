@@ -38,6 +38,17 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install NPM Dependencies
+        run: npm install
+
+      - name: Build Frontend Assets
+        run: npm run build
+
       - name: Generate Key
         run: php artisan key:generate
 
