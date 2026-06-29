@@ -29,7 +29,8 @@ class ProductController extends Controller
         $products = collect($this->productService->listProducts($filters))
             ->map(fn($p) => (object) $p);
         $products = $this->productService->listProducts($filters);
-
+    }  
+        
     public function index()
     {
         $product = Product::all();
@@ -69,7 +70,8 @@ class ProductController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        $this->productService->createProduct($validated);
+        $this->productService->createProduct($validated)
+        ([
             'name' => 'required|string|max:255',
             'category' => 'nullable|string|max:255',
             'price' => 'required|integer|min:0',
@@ -138,7 +140,7 @@ class ProductController extends Controller
         if (!$updated) {
             return back()->withErrors(['general' => 'Gagal memperbarui produk.']);
         }
-
+    }
     public function show(Product $product)
     {
         return view('products.show', compact('product'));
@@ -218,4 +220,3 @@ class ProductController extends Controller
         $product->delete();
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
     }
-}
