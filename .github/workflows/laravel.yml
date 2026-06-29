@@ -2,9 +2,9 @@ name: Laravel
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   laravel-tests:
@@ -36,7 +36,7 @@ jobs:
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
       - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Generate Key
         run: php artisan key:generate
@@ -52,7 +52,7 @@ jobs:
           DB_PORT: 3306
           DB_DATABASE: testing
           DB_USERNAME: root
-          DB_PASSWORD: root
+          DB_PASSWORD: 
         run: |
           php artisan migrate --force
           php artisan test
