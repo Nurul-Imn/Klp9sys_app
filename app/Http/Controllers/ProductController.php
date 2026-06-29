@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+<<<<<<< HEAD
 use App\Contract\ProductServiceContract;
+=======
+>>>>>>> 36494942b4e1901ebea6344515955376fda8ecbf
 use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+<<<<<<< HEAD
     public function __construct(
         protected ProductServiceContract $productService
     ) {}
@@ -24,6 +28,11 @@ class ProductController extends Controller
         $products = collect($this->productService->listProducts($filters))
             ->map(fn($p) => (object) $p);
 
+=======
+    public function index()
+    {
+        $products = Product::all();
+>>>>>>> 36494942b4e1901ebea6344515955376fda8ecbf
         return view('products.index', compact('products'));
     }
 
@@ -35,6 +44,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+<<<<<<< HEAD
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
             'price'       => 'required|numeric|min:0',
@@ -51,10 +61,24 @@ class ProductController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
 
         $this->productService->createProduct($validated);
+=======
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'price' => 'required|integer|min:0',
+            'stock' => 'required|integer|min:0',
+            'description' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
+
+        Product::create($validated);
+>>>>>>> 36494942b4e1901ebea6344515955376fda8ecbf
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
+<<<<<<< HEAD
     public function show(string $id)
     {
         $product = (object) $this->productService->getProduct((int) $id);
@@ -90,10 +114,37 @@ class ProductController extends Controller
         if (!$updated) {
             return back()->withErrors(['general' => 'Gagal memperbarui produk.']);
         }
+=======
+    public function show(Product $product)
+    {
+        return view('products.show', compact('product'));
+    }
+
+    public function edit(Product $product)
+    {
+        return view('products.edit', compact('product'));
+    }
+
+    public function update(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'price' => 'required|integer|min:0',
+            'stock' => 'required|integer|min:0',
+            'description' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : false;
+
+        $product->update($validated);
+>>>>>>> 36494942b4e1901ebea6344515955376fda8ecbf
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
+<<<<<<< HEAD
     public function destroy(string $id)
     {
         $deleted = $this->productService->deleteProduct((int) $id);
@@ -127,3 +178,11 @@ class ProductController extends Controller
         return view('products.index', compact('products'));
     }
 }
+=======
+    public function destroy(Product $product)
+    {
+        $product->delete();
+        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
+    }
+}
+>>>>>>> 36494942b4e1901ebea6344515955376fda8ecbf

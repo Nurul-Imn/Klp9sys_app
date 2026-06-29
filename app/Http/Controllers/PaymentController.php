@@ -3,90 +3,81 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
-use App\Models\Booking;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    /**
-     * Display a listing of all payments (admin view).
-     */
-    public function index()
+    
+    public function store(Request $request)
     {
-        $payments = Payment::with(['booking.user', 'booking.service'])
-            ->latest()
-            ->get();
+       $request->validate([
+    'booking_id' => 'required|exists:bookings,id',
+    'transaction_id' => 'required|string|max:100',
+    'gateway' => 'required|string|max:50',
+    'amount' => 'required|integer|min:0',
+    'currency' => 'required|string|max:10',
+    'payment_method' => 'required|string|max:50',
+    'status' => 'required|in:pending,paid,failed',
+        ]);
 
-        return view('payments.index', compact('payments'));
+        Payment::create([
+    'booking_id' => $request->booking_id,
+    'transaction_id' => $request->transaction_id,
+    'gateway' => $request->gateway,
+    'amount' => $request->amount,
+    'currency' => $request->currency,
+    'payment_method' => $request->payment_method,
+    'status' => $request->status,
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'Pembayaran berhasil ditambahkan');
     }
-
+    
     /**
-     * Display the specified payment / invoice.
+     * Display the specified resource.
      */
     public function show(string $id)
     {
-        $payment = Payment::with(['booking.user', 'booking.pet', 'booking.service'])
-            ->findOrFail($id);
-
-        return view('payments.show', compact('payment'));
+        //
     }
 
     /**
-     * Show the form for editing a payment (manual update by admin).
+     * Show the form for editing the specified resource.
      */
     public function edit(string $id)
     {
-        $payment = Payment::with(['booking.user', 'booking.service'])->findOrFail($id);
-
-        return view('payments.edit', compact('payment'));
+        //
     }
 
     /**
-     * Update payment status manually (admin confirms manual transfer, etc.).
+     * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Payment $payment)
     {
-        $payment = Payment::findOrFail($id);
+    $request->validate([
+        'booking_id' => 'required|exists:bookings,id',
+        'amount' => 'required|numeric|min:0',
+        'payment_method' => 'required|in:cash,transfer,ewallet',
+        'payment_status' => 'required|in:pending,paid',
+    ]);
 
-        $validated = $request->validate([
-            'payment_status' => 'required|in:unpaid,paid,failed,refunded',
-            'payment_method' => 'nullable|string|max:100',
-            'transaction_id' => 'nullable|string|max:255',
-            'gateway'        => 'nullable|string|max:100',
-            'notes'          => 'nullable|string',
-        ]);
+    $payment->update([
+        'booking_id' => $request->booking_id,
+        'amount' => $request->amount,
+        'payment_method' => $request->payment_method,
+        'status' => $request->status,
+    ]);
 
-        $payment->payment_status = $validated['payment_status'];
-        $payment->payment_method = $validated['payment_method'] ?? $payment->payment_method;
-        $payment->transaction_id = $validated['transaction_id'] ?? $payment->transaction_id;
-        $payment->gateway        = $validated['gateway'] ?? $payment->gateway;
-
-        if ($validated['payment_status'] === 'paid') {
-            $payment->status  = 'success';
-            $payment->paid_at = now();
-            // Update booking status to confirmed when paid
-            $payment->booking()->update(['status' => 'confirmed']);
-        } elseif ($validated['payment_status'] === 'failed') {
-            $payment->status = 'failed';
-        }
-
-        $payment->save();
-
-        return redirect()
-            ->route('payments.show', $payment->id)
-            ->with('success', 'Status pembayaran berhasil diperbarui!');
+    return redirect()->back()
+        ->with('success', 'Pembayaran berhasil diperbarui');
     }
 
     /**
-     * Remove the specified payment record.
+     * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        $payment = Payment::findOrFail($id);
-        $payment->delete();
-
-        return redirect()
-            ->route('payments.index')
-            ->with('success', 'Data pembayaran berhasil dihapus!');
+        //
     }
 }
